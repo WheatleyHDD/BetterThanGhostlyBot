@@ -4,33 +4,53 @@ import(
     "log"
     "strings"
     
+    "syscall"
+    "os"
+    "os/signal"
+    
     "github.com/WheatleyHDD/BetterThanGhostlyBot/utils"
+    "github.com/WheatleyHDD/BetterThanGhostlyBot/globals"
     
     "github.com/yuin/gopher-lua"
     longpoll "github.com/SevereCloud/vksdk/v2/longpoll-user"
     "github.com/SevereCloud/vksdk/v2/longpoll-user/v3"
     "github.com/SevereCloud/vksdk/v2/api"
     
-	//"github.com/SevereCloud/vksdk/v2/api/params"
 )
 
-var (
-    vk *api.VK
-)
 
 func main() {
+    c := make(chan os.Signal)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    
+    
     log.Println("Загрузка конфигов...")
     LoadConfig()
     log.Println("Загрузка модулей...")
     LoadModules()
-    log.Println(LoadedModules)
-    log.Println(AllCmds)
     log.Println("Модули загружены")
     
-    vk = api.NewVK(AccessToken)
+    globals.VK = api.NewVK(AccessToken)
     
     mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
-    lp, err := longpoll.NewLongPoll(vk, mode)
+    lp, err := longpoll.NewLongPoll(globals.VK, mode)
+    
+    go func() {
+        <-c
+        	// Безопасное завершение
+    	// Ждет пока соединение закроется и события обработаются
+    	lp.Shutdown()
+    
+    	// Закрыть соединение
+    	// Требует lp.Client.Transport = &http.Transport{DisableKeepAlives: true}
+    	lp.Client.CloseIdleConnections()
+        
+        log.Println("Отключение модулей...")
+        CloseModules()
+        log.Println("Модули отключены")
+        log.Println("Пока :(")
+        os.Exit(1)
+    }()
     
     if err != nil {
         panic(err)
@@ -44,19 +64,6 @@ func main() {
     if err := lp.Run(); err != nil {
 		log.Fatal(err)
 	}
-
-	// Безопасное завершение
-	// Ждет пока соединение закроется и события обработаются
-	lp.Shutdown()
-
-	// Закрыть соединение
-	// Требует lp.Client.Transport = &http.Transport{DisableKeepAlives: true}
-	lp.Client.CloseIdleConnections()
-    
-    log.Println("Отключение модулей...")
-    CloseModules()
-    log.Println("Модули отключены")
-    log.Println("Пока :(")
 }
 
 func OnMessage(m wrapper.NewMessage) {
@@ -72,7 +79,7 @@ func OnMessage(m wrapper.NewMessage) {
 func OnMessageToBot(m wrapper.NewMessage) {
     args := strings.Split(strings.ToLower(m.Text), " ")
     args = utils.RemoveItemString(args, 0)
-    for _, cmd := range AllCmds {
+    for _, cmd := range globals.AllCmds {
         if args[0] == strings.ToLower(cmd.Cmd) {
             argTable := cmd.Module.NewTable()
             for _, arg := range args {

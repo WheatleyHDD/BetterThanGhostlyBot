@@ -1,11 +1,13 @@
+local bot = require("bot")
+
 function onLoaded()
     print("Тестовый модуль запущен")
-    botAddCommand("старт", startCommand)
+    bot.AddCommand("старт", startCommand)
 end
 
 function startCommand(args, peer_id)
     print(args)
-    botSendMessage(peer_id, "хуярт", {})
+    bot.MessagesSend(peer_id, "хуярт", {})
 end
 
 function onClose()

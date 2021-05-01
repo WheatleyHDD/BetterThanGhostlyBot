@@ -1,5 +1,5 @@
 [account]
-access_token = ""
+access_token = "0e042671e38a99959cbb271c452892b09a0cccbff9e311b7f0d38865af41f4b2c467d9314e4c25398d4cf"
 
 [bot_settings]
 reply_message = false # Не работает

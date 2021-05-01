@@ -5,19 +5,10 @@ import (
     "os"
     "log"
     
+    "github.com/WheatleyHDD/BetterThanGhostlyBot/botmodule"
+    "github.com/WheatleyHDD/BetterThanGhostlyBot/globals"
+    
     "github.com/yuin/gopher-lua"
-	"github.com/SevereCloud/vksdk/v2/api"
-)
-
-type Command struct {
-    Cmd string
-    Fn *lua.LFunction
-    Module *lua.LState
-}
-
-var (
-    LoadedModules []*lua.LState
-    AllCmds []*Command
 )
 
 func LoadModules() {
@@ -30,12 +21,13 @@ func LoadModules() {
             
             // Кешируем наш модуль
             L := lua.NewState()
-            L.SetGlobal("botAddCommand", L.NewFunction(botAddCommand))
-            L.SetGlobal("botSendMessage", L.NewFunction(botSendMessage))
+            
+            L.PreloadModule("bot", botmodule.Loader)
+            
             if err := L.DoFile("modules/" + mod.Name() + "/init.lua"); err != nil {
                 panic(err)
             }
-            LoadedModules = append(LoadedModules, L)
+            globals.LoadedModules = append(globals.LoadedModules, L)
         }
         // Запускаем инициализацию
         startInitFuncs()
@@ -43,51 +35,14 @@ func LoadModules() {
 }
 
 func CloseModules() {
-    for _, L := range LoadedModules {
+    for _, L := range globals.LoadedModules {
         // Закрываем каждый модуль
         L.Close()
     }
 }
 
-func botSendMessage(L *lua.LState) int {
-    peerId := L.ToInt(1)
-    text := L.ToString(2)
-    
-    vk.MessagesSend(api.Params{
-		"peer_id":    peerId,
-		"message":    text,
-		"attachment": "",
-		"random_id":  0,
-	})
-    
-    return 0
-}
-
-func botAddCommand(L *lua.LState) int {
-    cmd := L.ToString(1)
-    fn := L.ToFunction(2)
-    has := false
-    for _, cmmnd := range AllCmds {
-        if cmmnd.Cmd == cmd {
-            has = true
-            break
-        }
-    }
-    if !has {
-        AllCmds = append(AllCmds, &Command{
-            Cmd: cmd,
-            Fn: fn,
-            Module: L,
-        })
-    } else {
-        log.Println("Команда \"" + cmd + "\" уже существует" )
-    }
-    L.Push(lua.LBool(has))
-    return 1
-}
-
 func startInitFuncs() {
-    for _, L := range LoadedModules {
+    for _, L := range globals.LoadedModules {
         if err := L.CallByParam(lua.P{
             Fn: L.GetGlobal("onLoaded"),
             NRet: 0,
