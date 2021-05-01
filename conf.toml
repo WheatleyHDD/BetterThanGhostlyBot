@@ -1,0 +1,6 @@
+[account]
+access_token = ""
+
+[bot_settings]
+reply_message = false # Не работает
+appeal = ["тест", "дима"]
