@@ -2,12 +2,9 @@ package botmodule
 
 import (
     "log"
-    "strings"
-    "strconv"
     "os"
     
     "github.com/yuin/gopher-lua"
-    "github.com/SevereCloud/vksdk/v2/api"
     "github.com/WheatleyHDD/BetterThanGhostlyBot/globals"
     "github.com/imroc/req"
 )
