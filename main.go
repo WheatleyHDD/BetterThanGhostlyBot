@@ -3,6 +3,7 @@ package main
 import(
     "log"
     "strings"
+    "time"
     
     "syscall"
     "os"
@@ -34,6 +35,7 @@ func main() {
     mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
     lp, err := longpoll.NewLongPoll(globals.VK, mode)
     
+    go GoToOnline()
     go func() {
         <-c
         	// Безопасное завершение
@@ -63,6 +65,13 @@ func main() {
     if err := lp.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GoToOnline() {
+    globals.VK.AccountSetOnline(api.Params{
+        "voip": 0,
+    })
+    time.Sleep(time.Minute * 5)
 }
 
 func OnMessage(m wrapper.NewMessage) {
