@@ -13,6 +13,7 @@ type Command struct {
 }
 
 var(
+    AccessToken string
     VK *api.VK
     LoadedModules []*lua.LState
     AllCmds []*Command

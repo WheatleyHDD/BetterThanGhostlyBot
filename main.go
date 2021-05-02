@@ -23,14 +23,13 @@ func main() {
     c := make(chan os.Signal)
     signal.Notify(c, os.Interrupt, syscall.SIGTERM)
     
-    
     log.Println("Загрузка конфигов...")
     LoadConfig()
+    globals.VK = api.NewVK(globals.AccessToken)
+    
     log.Println("Загрузка модулей...")
     LoadModules()
     log.Println("Модули загружены")
-    
-    globals.VK = api.NewVK(AccessToken)
     
     mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
     lp, err := longpoll.NewLongPoll(globals.VK, mode)
