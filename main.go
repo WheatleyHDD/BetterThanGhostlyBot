@@ -19,6 +19,9 @@ import(
     
 )
 
+var (
+    lp *longpoll.LongPoll
+)
 
 func main() {
     c := make(chan os.Signal)
@@ -31,9 +34,6 @@ func main() {
     log.Println("Загрузка модулей...")
     LoadModules()
     log.Println("Модули загружены")
-    
-    mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
-    lp, err := longpoll.NewLongPoll(globals.VK, mode)
     
     go GoToOnline()
     go func() {
@@ -53,6 +53,12 @@ func main() {
         os.Exit(1)
     }()
     
+    StartLongPoll()
+}
+
+func StartLongPoll() {
+    mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
+    lp, err := longpoll.NewLongPoll(globals.VK, mode)
     if err != nil {
         panic(err)
     }
@@ -63,15 +69,17 @@ func main() {
     w.OnNewMessage(OnMessage)
     
     if err := lp.Run(); err != nil {
-		log.Fatal(err)
+		StartLongPoll()
 	}
 }
 
 func GoToOnline() {
-    globals.VK.AccountSetOnline(api.Params{
-        "voip": 0,
-    })
-    time.Sleep(time.Minute * 5)
+    for {
+        globals.VK.AccountSetOnline(api.Params{
+            "voip": 0,
+        })
+        time.Sleep(time.Minute * 5)
+    }
 }
 
 func OnMessage(m wrapper.NewMessage) {
