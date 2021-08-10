@@ -3,4 +3,4 @@ access_token = "11a4fd207ffea6643deb32eacd2384505d07bd3f1ba78fa050b4d67dc34da481
 
 [bot_settings]
 reply_message = false # Не работает
-appeal = ["бот"]
+appeal = ["бот, ", "?"]

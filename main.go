@@ -5,12 +5,10 @@ import(
     "strings"
     "time"
 
-    DEATH "github.com/vrecan/death"
-    SYS "syscall"
+    "github.com/ztrue/shutdown"
     "os"
-    "os/signal"
 
-    "github.com/WheatleyHDD/BetterThanGhostlyBot/utils"
+    // "github.com/WheatleyHDD/BetterThanGhostlyBot/utils"
     "github.com/WheatleyHDD/BetterThanGhostlyBot/globals"
 
     "github.com/yuin/gopher-lua"
@@ -25,7 +23,6 @@ var (
 )
 
 func main() {
-    death := DEATH.NewDeath(SYS.SIGINT, SYS.SIGTERM)
 
     log.Println("Загрузка конфигов...")
     LoadConfig()
@@ -37,9 +34,20 @@ func main() {
 
     go GoToOnline()
 
-    StartLongPoll()
+    go StartLongPoll()
 
-    death.WaitForDeathWithFunc(func(){
+    shutdown.Listen()
+}
+
+func StartLongPoll() {
+    mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
+    lp, err := longpoll.NewLongPoll(globals.VK, mode)
+    if err != nil {
+        panic(err)
+    }
+
+
+    shutdown.Add(func() {
   		// Безопасное завершение
     	// Ждет пока соединение закроется и события обработаются
     	lp.Shutdown()
@@ -54,24 +62,19 @@ func main() {
       log.Println("Пока :(")
       os.Exit(1)
   	})
-}
-
-func StartLongPoll() {
-    mode := longpoll.ReceiveAttachments + longpoll.ExtendedEvents
-    lp, err := longpoll.NewLongPoll(globals.VK, mode)
-    if err != nil {
-        panic(err)
-    }
 
     w := wrapper.NewWrapper(lp)
 
     // event with code 4
     w.OnNewMessage(OnMessage)
 
+    log.Println("Лонгпул запущен")
+
     if err := lp.Run(); err != nil {
-		StartLongPoll()
-	}
+  		StartLongPoll()
+  	}
 }
+
 
 func GoToOnline() {
     for {
@@ -85,16 +88,17 @@ func GoToOnline() {
 func OnMessage(m wrapper.NewMessage) {
     mText := strings.ToLower(m.Text)
     for _, a := range Appeals {
-        if strings.HasPrefix(mText, strings.ToLower(a.(string)) + ", ") {
-           OnMessageToBot(m)
+        if strings.HasPrefix(mText, strings.ToLower(a.(string))) {
+           OnMessageToBot(m, strings.ToLower(a.(string)))
            break
         }
     }
 }
 
-func OnMessageToBot(m wrapper.NewMessage) {
-    args := strings.Split(strings.ToLower(m.Text), " ")
-    args = utils.RemoveItemString(args, 0)
+func OnMessageToBot(m wrapper.NewMessage, appeal string) {
+    rawText := strings.Replace(strings.ToLower(m.Text), appeal, "", 1)
+    args := strings.Split(strings.ToLower(rawText), " ")
+    //args = utils.RemoveItemString(args, 0)
     for _, cmd := range globals.AllCmds {
         if args[0] == strings.ToLower(cmd.Cmd) {
             argTable := cmd.Module.NewTable()
