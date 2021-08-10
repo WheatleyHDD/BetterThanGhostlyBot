@@ -2,8 +2,8 @@ local bot = require("bot")
 
 function onLoaded()
     print("Тестовый модуль запущен")
-    
-    bot.AddCommand("тест", startCommand)
+
+    bot.AddCommand("тест", startCommand, "Тестовая команда", "💡")
 end
 
 function startCommand(args, peer_id)

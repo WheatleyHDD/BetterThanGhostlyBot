@@ -2,12 +2,14 @@ package globals
 
 import (
     "github.com/SevereCloud/vksdk/v2/api"
-    
+
     "github.com/yuin/gopher-lua"
 )
 
 type Command struct {
     Cmd string
+    Description string
+    Icon string
     Fn *lua.LFunction
     Module *lua.LState
 }

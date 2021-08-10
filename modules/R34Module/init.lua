@@ -7,7 +7,7 @@ local req_url = "https://r34-json.herokuapp.com"
 function onLoaded()
   print("R34Module запущен")
 
-  bot.AddCommand("r34", r34Command)
+  bot.AddCommand("r34", r34Command, "Отправка рандомной картинки с сайта rule34.xxx", "🔞")
 end
 
 function r34Command(args, peer_id)
