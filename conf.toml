@@ -1,6 +1,6 @@
 [account]
-access_token = ""
+access_token = "11a4fd207ffea6643deb32eacd2384505d07bd3f1ba78fa050b4d67dc34da481761e8b4c57ba754f319b1"
 
 [bot_settings]
 reply_message = false # Не работает
-appeal = ["керол", "бот", "кэрол"]
+appeal = ["бот"]

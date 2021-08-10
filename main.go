@@ -4,19 +4,20 @@ import(
     "log"
     "strings"
     "time"
-    
-    "syscall"
+
+    DEATH "github.com/vrecan/death"
+    SYS "syscall"
     "os"
     "os/signal"
-    
+
     "github.com/WheatleyHDD/BetterThanGhostlyBot/utils"
     "github.com/WheatleyHDD/BetterThanGhostlyBot/globals"
-    
+
     "github.com/yuin/gopher-lua"
     longpoll "github.com/SevereCloud/vksdk/v2/longpoll-user"
     "github.com/SevereCloud/vksdk/v2/longpoll-user/v3"
     "github.com/SevereCloud/vksdk/v2/api"
-    
+
 )
 
 var (
@@ -24,36 +25,35 @@ var (
 )
 
 func main() {
-    c := make(chan os.Signal)
-    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-    
+    death := DEATH.NewDeath(SYS.SIGINT, SYS.SIGTERM)
+
     log.Println("Загрузка конфигов...")
     LoadConfig()
     globals.VK = api.NewVK(globals.AccessToken)
-    
+
     log.Println("Загрузка модулей...")
     LoadModules()
     log.Println("Модули загружены")
-    
+
     go GoToOnline()
-    go func() {
-        <-c
-        	// Безопасное завершение
+
+    StartLongPoll()
+
+    death.WaitForDeathWithFunc(func(){
+  		// Безопасное завершение
     	// Ждет пока соединение закроется и события обработаются
     	lp.Shutdown()
-    
+
     	// Закрыть соединение
     	// Требует lp.Client.Transport = &http.Transport{DisableKeepAlives: true}
     	lp.Client.CloseIdleConnections()
-        
-        log.Println("Отключение модулей...")
-        CloseModules()
-        log.Println("Модули отключены")
-        log.Println("Пока :(")
-        os.Exit(1)
-    }()
-    
-    StartLongPoll()
+
+      log.Println("Отключение модулей...")
+      CloseModules()
+      log.Println("Модули отключены")
+      log.Println("Пока :(")
+      os.Exit(1)
+  	})
 }
 
 func StartLongPoll() {
@@ -62,12 +62,12 @@ func StartLongPoll() {
     if err != nil {
         panic(err)
     }
-    
+
     w := wrapper.NewWrapper(lp)
 
     // event with code 4
     w.OnNewMessage(OnMessage)
-    
+
     if err := lp.Run(); err != nil {
 		StartLongPoll()
 	}
